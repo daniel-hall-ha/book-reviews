@@ -42,75 +42,88 @@ public_users.post("/register", (req, res) => {
 });
 
 // Get the book list available in the shop
-public_users.get('/', function (req, res) {
-  // Convert the books object into an array containing the book information.
-  const result = Object.entries(books).map(([isbn, detail]) => {
-    return {
-      isbn: isbn,
-      title: detail.title,
-      author: detail.author,
-      reviews: detail.reviews
-    };
-  });
-  // Set the response content type to JSON.
-  res.type('json');
-  // Return the formatted book list.
-  return res.status(200).send(JSON.stringify(result, null, 2));
+public_users.get('/', async function (req, res) {
+  try {
+    // Convert the books object into an array containing the book information.
+    const result = await Object.entries(books).map(([isbn, detail]) => {
+      return {
+        isbn: isbn,
+        title: detail.title,
+        author: detail.author,
+        reviews: detail.reviews
+      };
+    });
+    // Set the response content type to JSON.
+    await res.type('json');
+    // Return the formatted book list.
+    return await res.status(200).send(JSON.stringify(result, null, 2));
+  } catch (err) {
+    console.log(err) // Log any alien other error if ever happened
+  }
 });
 
 // Get book details based on ISBN
-public_users.get('/isbn/:isbn', function (req, res) {
-  // Get the ISBN from the URL parameter.
-  const isbn = req.params.isbn
-  res.type('json')
-  // Check whether the requested ISBN exists.
-  if (books[isbn])
-    return res.status(200).send(JSON.stringify({ [isbn]: books[isbn] }, null, 2));
-  else
-    // Return a 404 response when the book does not exist.
-    return res.status(404).send({ messsage: "Book not found." })
+public_users.get('/isbn/:isbn', async function (req, res) {
+  try {
+    // Get the ISBN from the URL parameter.
+    const isbn = await req.params.isbn
+    await res.type('json')
+    // Check whether the requested ISBN exists.
+    if (books[isbn])
+      return await res.status(200).send(JSON.stringify({ [isbn]: books[isbn] }, null, 2));
+    else
+      // Return a 404 response when the book does not exist.
+      return await res.status(404).send({ messsage: "Book not found." })
+  } catch (err) {
+    console.log(err) // Log any alien other error if ever happened
+  }
 });
 
 // Get book details based on author
-public_users.get('/author/:author', function (req, res) {
-  // Get the author from the URL parameter.
-  const author = req.params.author
-  // Filter books by comparing the normalised author name with the URL parameter.
-  const results = Object.fromEntries(
-    Object.entries(books).filter(
-      ([isbn, detail]) => detail.author.toLowerCase().replaceAll(' ', '-') === author.toLowerCase()
+public_users.get('/author/:author', async function (req, res) {
+  try {
+    // Get the author from the URL parameter.
+    const author = await req.params.author
+    // Filter books by comparing the normalised author name with the URL parameter.
+    const results = await Object.fromEntries(
+      Object.entries(books).filter(
+        ([isbn, detail]) => detail.author.toLowerCase().replaceAll(' ', '-') === author.toLowerCase()
+      )
     )
-  )
-  // Display the matching results for testing.
-  console.log(results)
-  res.type('json')
-  // Return the matching books when results are found.
-  if (Object.keys(results).length > 0)
-    return res.status(300).send(JSON.stringify(results, null, 2));
-  else
-    // Return a 404 response when no matching books are found.
-    return res.status(404).send({ message: "Book not found." })
+    await res.type('json')
+    // Return the matching books when results are found.
+    if (Object.keys(results).length > 0)
+      return await res.status(300).send(JSON.stringify(results, null, 2));
+    else
+      // Return a 404 response when no matching books are found.
+      return await res.status(404).send({ message: "Book not found." })
+  } catch (err) {
+    console.log(err) // Log any alien other error if ever happened
+
+  }
 });
 
 // Get all books based on title
-public_users.get('/title/:title', function (req, res) {
-  // Get the title from the URL parameter.
-  const title = req.params.title
-  // Filter books by comparing the normalised title with the URL parameter.
-  const results = Object.fromEntries(
-    Object.entries(books).filter(
-      ([isbn, detail]) => detail.title.toLowerCase().replaceAll(' ', '-') === title.toLowerCase()
+public_users.get('/title/:title', async function (req, res) {
+  try {
+    // Get the title from the URL parameter.
+    const title = req.params.title
+    // Filter books by comparing the normalised title with the URL parameter.
+    const results = Object.fromEntries(
+      Object.entries(books).filter(
+        ([isbn, detail]) => detail.title.toLowerCase().replaceAll(' ', '-') === title.toLowerCase()
+      )
     )
-  )
-  // Display the matching results for testing.
-  console.log(results)
-  res.type('json')
-  // Return the matching books when results are found.
-  if (Object.keys(results).length > 0)
-    return res.status(200).send(JSON.stringify(results, null, 2));
-  else
-    // Return a 404 response when no matching books are found.
-    return res.status(404).send({ message: "Book not found." })
+    res.type('json')
+    // Return the matching books when results are found.
+    if (Object.keys(results).length > 0)
+      return res.status(200).send(JSON.stringify(results, null, 2));
+    else
+      // Return a 404 response when no matching books are found.
+      return res.status(404).send({ message: "Book not found." })
+  } catch (err) {
+    console.log(err) // Log any alien other error if ever happened
+  }
 });
 
 //  Get book review
@@ -179,7 +192,7 @@ function makeGetRequest(url) {
 // Execute the asynchronous functions to test the GET endpoints.
 getAllBooks() // Test GET All Books using axios
 getBooksByISBN() // Test GET Boos by ISBN using axios
-makeGetRequest('http://localhost:3000/isbn/2') // Test GET books by ISBN using promise
-makeGetRequest('http://localhost:3000/title/One-Thousand-and-One-Nights') // Test GET books by Title using promise
+makeGetRequest('http://localhost:3000/isbn/2').then(data => console.log(data)).catch(err => console.log(err)) // Test GET books by ISBN using promise
+makeGetRequest('http://localhost:3000/title/One-Thousand-and-One-Nights').then(data => console.log(data)).catch(err => console.log(err)) // Test GET books by Title using promise
 
 module.exports.general = public_users;

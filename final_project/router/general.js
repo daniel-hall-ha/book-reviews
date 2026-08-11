@@ -3,7 +3,11 @@ let books = require("./booksdb.js");
 let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const crypto = require('node:crypto');
-const axios = require('axios')
+const axios = require('axios');
+const { resolve } = require('node:dns');
+const { rejects } = require('node:assert/strict');
+const http = require('http');
+const { text } = require('stream/consumers');
 
 // Router for public user and book-related routes.
 const public_users = express.Router();
@@ -151,39 +155,31 @@ async function getBooksByISBN() {
   }
 }
 
-// Async GET Books by Author
-async function getBooksByAuthor() {
-  try {
-    // Send an asynchronous GET request to retrieve books by Chinua Achebe.
-    const response = await axios.get('http://localhost:3000/author/chinua-achebe')
-    // Wait for the request to complete and store the server response.
-    console.log(response.data)
-    // Display the response data.
-  } catch (error) {
-    // Handle errors from the Axios request.
-    console.log(error.message)
-  }
-}
-
-// Async GET Books by title
-async function getBooksByTitle() {
-  try {
-    // Send an asynchronous GET request to retrieve the book by title.
-    const response = await axios.get('http://localhost:3000/title/things-fall-apart')
-    // Wait for the request to complete and store the server response.
-    console.log(response.data)
-    // Display the response data.
-  } catch (error) {
-    // Handle errors from the Axios request.
-    console.log(error.message)
-  }
+function makeGetRequest(url) {
+  return new Promise((resolve, reject) => {
+    http.get(url, async (res) => {
+      // 1. Reject if the status code is not in the 2xx success range
+      if (res.statusCode < 200 || res.statusCode >= 300) {
+        return reject(new Error(`Status Code: ${res.statusCode}`));
+      }
+      try {
+        const body = await text(res); // Consumes the stream
+        const data = JSON.parse(body);
+        resolve(data); // 2. Resolve the Promise with the final data
+      } catch (err) {
+        reject(new Error('Failed to parse JSON response')); // 3. Reject on parsing error
+      }
+    }).on('error', (err) => {
+      reject(err); // 4. Reject if there is a network/DNS error
+    });
+  });
 }
 
 // Test in Console
 // Execute the asynchronous functions to test the GET endpoints.
-getAllBooks()
-getBooksByAuthor()
-getBooksByISBN()
-getBooksByTitle()
+getAllBooks() // Test GET All Books using axios
+getBooksByISBN() // Test GET Boos by ISBN using axios
+makeGetRequest('http://localhost:3000/isbn/2') // Test GET books by ISBN using promise
+makeGetRequest('http://localhost:3000/title/One-Thousand-and-One-Nights') // Test GET books by Title using promise
 
 module.exports.general = public_users;
